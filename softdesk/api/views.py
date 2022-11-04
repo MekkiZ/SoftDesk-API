@@ -82,7 +82,7 @@ class ContributorViewSet(viewsets.ModelViewSet):
             try:
 
                 contributor = Contributors()
-                contributor.project_id = project
+                contributor.project_id = Projects.objects.get(id=project_id)
                 contributor.user_id = get_object_or_404(User, id=request.data['user_id'])
                 contributor.role = request.data['role']
                 contributor.permissions = request.data['permissions']
