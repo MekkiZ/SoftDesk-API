@@ -24,6 +24,7 @@ router.register('users', v.UserViewSet, basename='users')
 router.register('projects', v.ProjectViewSet, basename='projects')
 router.register('issues', v.IssueViewSet, basename='issues')
 router.register('comments', v.CommentViewSet, basename='comments')
+router.register('contributors', v.ContributorViewAll, basename='contributors')
 
 
 # Wire up our API using automatic URL routing.
@@ -37,5 +38,6 @@ urlpatterns = [
     path('api-token-auth', views.obtain_auth_token),
     path('signup/', v.RegisterUserAPIView.as_view()),
     path('projects/<int:project_id>/users/', v.ContributorViewSet.as_view({'get': 'list'})),
+    path('projects/<int:project_id>/users/<int:user_id_id>', v.DeleteContributeur.as_view({'get': 'list'})),
 
 ]

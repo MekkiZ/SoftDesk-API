@@ -3,7 +3,6 @@ from django.conf import settings
 
 
 class Projects(models.Model):
-
     CHOICES = (
         ('FRONTEND', 'frontend'),
         ('BACKEND', 'backend'),
@@ -15,6 +14,9 @@ class Projects(models.Model):
     type = models.CharField(max_length=255, choices=CHOICES)
     author_user_id = models.ForeignKey(
         to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f'{self.title} {self.type}'
 
 
 class Contributors(models.Model):
@@ -44,9 +46,11 @@ class Issues(models.Model):
         to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assignee_user_id')
     created_time = models.DateTimeField(auto_now_add=True)
 
+    def __repr__(self):
+        return f'{self.title} ({self.desc})'
+
 
 class Comments(models.Model):
-
     description = models.CharField(max_length=255)
     author_user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     issue_id = models.ForeignKey(Issues, on_delete=models.CASCADE)
