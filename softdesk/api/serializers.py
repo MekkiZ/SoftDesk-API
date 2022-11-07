@@ -73,7 +73,20 @@ class IssueSerializer(ModelSerializer):
                   'status', 'author_user_id', 'assignee_user_id', 'created_time']
 
 
+class IssueAddForProjectSerializer(ModelSerializer):
+    class Meta:
+        model = Issues
+        fields = ['id', 'title', 'desc', 'tag', 'priority',
+                  'status', 'author_user_id', 'assignee_user_id', 'created_time']
+
+
 class ContributorSerializer(ModelSerializer):
+    class Meta:
+        model = Contributors
+        fields = ['id', 'user_id', 'project_id', 'permission', 'role']
+
+
+class ContributorDetailsSerializer(ModelSerializer):
     class Meta:
         model = Contributors
         fields = ['id', 'user_id', 'project_id', 'permission', 'role']

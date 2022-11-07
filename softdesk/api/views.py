@@ -1,8 +1,9 @@
+from django.db.models import Count, Q
 from django.http import HttpResponse
 from rest_framework import viewsets
 from rest_framework import permissions, generics
 from api.serializers import UserSerializer, ContributorSerializer, ProjectDetailSerializer, ProjectListSerializer, \
-    CommentSerializer, IssueSerializer
+    CommentSerializer, IssueSerializer, ContributorDetailsSerializer, IssueAddForProjectSerializer
 from api.models import Projects, Comments, Issues, Contributors
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -64,6 +65,63 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
+class IssueDetailsForProjectViewSet(viewsets.ModelViewSet):
+    serializer_class = IssueAddForProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        project_issue_id = self.kwargs['project_id']
+        return Issues.objects.filter(project_id=project_issue_id)
+
+    def post(self, request, project_id, *args, **kwargs):
+
+        project = get_object_or_404(Projects, id=project_id)
+        print(project.author_user_id_id)
+        print(request.user.id)
+
+        if request.user.id == project.author_user_id_id:
+            try:
+                issues = Issues()
+                issues.project_id = project
+                issues.title = request.data['title']
+                issues.desc = request.data['desc']
+                issues.tag = request.data['tag']
+                issues.priority = request.data['priority']
+                issues.status = request.data['status']
+                issues.author_user_id = get_object_or_404(User, id=project.author_user_id.id)
+                issues.assignee_user_id = get_object_or_404(User, id=request.data['assignee_user_id'])
+                data = {'title': issues.title,
+                        'project_id': issues.project_id.id,
+                        'desc': issues.desc,
+                        'tag': issues.tag,
+                        'priority': issues.priority,
+                        'status': issues.status,
+                        'assignee_user_id': issues.author_user_id.id
+                        }
+                issues.save()
+                return Response(data, status=status.HTTP_201_CREATED)
+            except IndexError as exc:
+                return Response(str(exc), status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response(None, status=status.HTTP_403_FORBIDDEN)
+
+    @action(detail=True, methods=['PUT'], url_path='put')
+    def put(self, request, *args, **kwargs):
+        issues = Issues.objects.get()
+        data = request.data
+
+        issues.title = data['title']
+        issues.desc = data['desc']
+        issues.tag = data['tag']
+        issues.priority = data['priority']
+        issues.status = data['status']
+        issues.author_user_id = data['author_user_id']
+        issues.assignee_user_id = data['assignee_user_id']
+        issues.save()
+        serializer = IssueAddForProjectSerializer(issues)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+
+
 class IssueViewSet(viewsets.ModelViewSet):
     queryset = Issues.objects.all()
     serializer_class = IssueSerializer
@@ -77,9 +135,12 @@ class ContributorViewAll(viewsets.ModelViewSet):
 
 
 class ContributorViewSet(viewsets.ModelViewSet):
-    queryset = Contributors.objects.all()
-    serializer_class = ContributorSerializer
+    serializer_class = ContributorDetailsSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):  # https://www.django-rest-framework.org/api-guide/filtering/
+        project_id = self.kwargs['project_id']
+        return Contributors.objects.filter(project_id=project_id)
 
     def post(self, request, project_id):
 
@@ -88,31 +149,36 @@ class ContributorViewSet(viewsets.ModelViewSet):
         if request.user.id == project.author_user_id_id:
             try:
                 contributor = Contributors()
-                contributor.project_id_id = project
-                contributor.user_id_id = get_object_or_404(User, id=request.data['user_id'])
+                contributor.project_id = project
+                contributor.user_id = get_object_or_404(User, id=request.data['user_id'])
                 contributor.role = request.data['role']
-                contributor.permissions = request.data['permissions']
+                contributor.permission = request.data['permission']
                 data = {'user_id': contributor.user_id.id, 'project_id': contributor.project_id.id,
                         'permission': contributor.permission, 'role': contributor.role}
-                print(data)
-                print('je suis dans le try')
+                f = Contributors.objects.filter(project_id=contributor.project_id)
+                if f.count() >= 1:
+                    f.delete()
                 contributor.save()
                 return Response(data, status=status.HTTP_201_CREATED)
             except Exception as e:
 
                 return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         else:
-            print('je susi dasn le else')
             return Response(status.HTTP_403_FORBIDDEN)
 
 
 class DeleteContributeur(viewsets.ModelViewSet):
-    queryset = Contributors.objects.all()
-    serializer_class = ContributorSerializer
+    serializer_class = ContributorDetailsSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    @action(detail=False, methods=['DELETE', 'POST'])
+    def get_queryset(self):  # https://www.django-rest-framework.org/api-guide/filtering/
+        user = self.kwargs['user_id_id']
+        return Contributors.objects.filter(Q(user_id=user) & Q(project_id=self.kwargs['project_id'])
+                                           )
+
+    @action(detail=False, methods=['DELETE'])
     def delete(self, request, user_id_id, *args, **kwargs):
-        user_id_id = Contributors.objects.get(id=user_id_id)
-        user_id_id.delete()
+        user = self.kwargs['user_id_id']
+        f = Contributors.objects.filter(project_id=self.kwargs['project_id'])
+        f.delete()
         return Response(status.HTTP_204_NO_CONTENT)

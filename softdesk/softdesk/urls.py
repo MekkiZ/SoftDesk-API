@@ -39,5 +39,5 @@ urlpatterns = [
     path('signup/', v.RegisterUserAPIView.as_view()),
     path('projects/<int:project_id>/users/', v.ContributorViewSet.as_view({'get': 'list'})),
     path('projects/<int:project_id>/users/<int:user_id_id>', v.DeleteContributeur.as_view({'get': 'list'})),
-
+    path('projects/<int:project_id>/issues/', v.IssueDetailsForProjectViewSet.as_view({'get': 'list'})),
 ]
