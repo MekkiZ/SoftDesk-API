@@ -105,21 +105,37 @@ class IssueDetailsForProjectViewSet(viewsets.ModelViewSet):
         else:
             return Response(None, status=status.HTTP_403_FORBIDDEN)
 
-    @action(detail=True, methods=['PUT'], url_path='put')
-    def put(self, request, *args, **kwargs):
-        issues = Issues.objects.get()
-        data = request.data
 
-        issues.title = data['title']
-        issues.desc = data['desc']
-        issues.tag = data['tag']
-        issues.priority = data['priority']
-        issues.status = data['status']
-        issues.author_user_id = data['author_user_id']
-        issues.assignee_user_id = data['assignee_user_id']
-        issues.save()
-        serializer = IssueAddForProjectSerializer(issues)
-        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+class IssuesModifyView(APIView):
+    serializer_class = IssueAddForProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, project_id, issues_id):
+        issue_to_get = Issues.objects.filter(Q(project_id=project_id) & Q(id=issues_id))
+        serializer = IssueSerializer(issue_to_get, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        # return Issues.objects.filter(project_id_id=project_id)
+
+    def put(self, request, issues_id, *args, **kwargs):
+        issues = Issues.objects.get(id=issues_id)
+        serializer = IssueAddForProjectSerializer(issues, data=request.data)
+        data = request.data
+        if serializer.is_valid():
+            issues.title = data['title']
+            issues.desc = data['desc']
+            issues.tag = data['tag']
+            issues.priority = data['priority']
+            issues.status = data['status']
+            issues.author_user_id = User.objects.get(id=data['author_user_id'])
+            issues.assignee_user_id = User.objects.get(id=data['assignee_user_id'])
+            issues.save()
+
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+
+    def delete(self, request, issues_id, project_id, *args, **kwargs):
+        f = Issues.objects.filter(Q(id=issues_id) & Q(project_id_id=project_id))
+        f.delete()
+        return Response(status.HTTP_200_OK)
 
 
 class IssueViewSet(viewsets.ModelViewSet):
@@ -182,3 +198,13 @@ class DeleteContributeur(viewsets.ModelViewSet):
         f = Contributors.objects.filter(project_id=self.kwargs['project_id'])
         f.delete()
         return Response(status.HTTP_204_NO_CONTENT)
+
+class CommentsAddApiView(APIView):
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+
+
+
+

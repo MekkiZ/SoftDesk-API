@@ -40,4 +40,5 @@ urlpatterns = [
     path('projects/<int:project_id>/users/', v.ContributorViewSet.as_view({'get': 'list'})),
     path('projects/<int:project_id>/users/<int:user_id_id>', v.DeleteContributeur.as_view({'get': 'list'})),
     path('projects/<int:project_id>/issues/', v.IssueDetailsForProjectViewSet.as_view({'get': 'list'})),
+    path('projects/<int:project_id>/issues/<int:issues_id>', v.IssuesModifyView.as_view()),
 ]
