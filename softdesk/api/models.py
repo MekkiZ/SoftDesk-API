@@ -46,8 +46,8 @@ class Issues(models.Model):
         to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assignee_user_id')
     created_time = models.DateTimeField(auto_now_add=True)
 
-    def __repr__(self):
-        return f'{self.title} ({self.desc})'
+    def __str__(self):
+        return f'{self.title} ({self.id}) '
 
 
 class Comments(models.Model):
@@ -55,3 +55,6 @@ class Comments(models.Model):
     author_user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     issue_id = models.ForeignKey(Issues, on_delete=models.CASCADE)
     created_time = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.author_user_id} ({self.issue_id})'

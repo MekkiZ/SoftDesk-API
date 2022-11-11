@@ -76,9 +76,6 @@ class IssueDetailsForProjectViewSet(viewsets.ModelViewSet):
     def post(self, request, project_id, *args, **kwargs):
 
         project = get_object_or_404(Projects, id=project_id)
-        print(project.author_user_id_id)
-        print(request.user.id)
-
         if request.user.id == project.author_user_id_id:
             try:
                 issues = Issues()
@@ -199,12 +196,47 @@ class DeleteContributeur(viewsets.ModelViewSet):
         f.delete()
         return Response(status.HTTP_204_NO_CONTENT)
 
+
 class CommentsAddApiView(APIView):
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        return Comments.objects.filter(issue_id_id=self.kwargs['issues_id'])
 
+    def get(self, request, project_id, issues_id):
+        Comments.objects.filter(issue_id_id=issues_id)
+        Issues.objects.filter(project_id_id=project_id)
+        comments = Comments.objects.filter(issue_id_id=issues_id)
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def post(self, request, project_id, issues_id):
 
+        issues = get_object_or_404(Issues, id=issues_id)
+        Issues.objects.filter(project_id_id=project_id)
 
+        if request.user.id == request.user.id:
+            try:
+                print("je suis qu niveau du try avant ")
+                comment = Comments()
+                comment.issue_id_id = issues
+                comment.description = request.data['description']
+                comment.author_user_id_id = get_object_or_404(User, id=comment.author_user_id_id)
+                data = {
+                    'issue_id': comment.issue_id_id,
+                    'description': comment.description,
+                    'author': comment.author_user_id_id,
+
+                }
+                print("je suis qu niveau du try apres ")
+
+                print(data)
+                comment.save()
+                return Response(data, status=status.HTTP_201_CREATED)
+            except IndexError as exc:
+                print("je suis dqns le except ")
+                return Response(str(exc), status=status.HTTP_404_NOT_FOUND)
+        else:
+            print("je suis dqn le else  ")
+            return Response(None, status=status.HTTP_403_FORBIDDEN)
