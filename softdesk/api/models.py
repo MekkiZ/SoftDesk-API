@@ -57,4 +57,4 @@ class Comments(models.Model):
     created_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.author_user_id} ({self.issue_id})'
+        return f'{self.created_time} {self.id}'

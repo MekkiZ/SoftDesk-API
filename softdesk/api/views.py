@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from rest_framework import viewsets
 from rest_framework import permissions, generics
 from api.serializers import UserSerializer, ContributorSerializer, ProjectDetailSerializer, ProjectListSerializer, \
-    CommentSerializer, IssueSerializer, ContributorDetailsSerializer, IssueAddForProjectSerializer
+    CommentSerializer, IssueSerializer, ContributorDetailsSerializer, IssueAddForProjectSerializer, CommentAddSerializer
 from api.models import Projects, Comments, Issues, Contributors
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -198,7 +198,7 @@ class DeleteContributeur(viewsets.ModelViewSet):
 
 
 class CommentsAddApiView(APIView):
-    serializer_class = CommentSerializer
+    serializer_class = CommentAddSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -215,28 +215,22 @@ class CommentsAddApiView(APIView):
 
         issues = get_object_or_404(Issues, id=issues_id)
         Issues.objects.filter(project_id_id=project_id)
-
         if request.user.id == request.user.id:
             try:
-                print("je suis qu niveau du try avant ")
                 comment = Comments()
-                comment.issue_id_id = issues
+                comment.issue_id_id = issues.id
                 comment.description = request.data['description']
-                comment.author_user_id_id = get_object_or_404(User, id=comment.author_user_id_id)
+                comment.author_user_id = User.objects.get(id=request.data['author_user_id'])
+                print(comment.author_user_id_id)
+                comment.save()
                 data = {
                     'issue_id': comment.issue_id_id,
                     'description': comment.description,
-                    'author': comment.author_user_id_id,
-
+                    'author': comment.author_user_id.id,
                 }
-                print("je suis qu niveau du try apres ")
-
-                print(data)
-                comment.save()
                 return Response(data, status=status.HTTP_201_CREATED)
-            except IndexError as exc:
-                print("je suis dqns le except ")
-                return Response(str(exc), status=status.HTTP_404_NOT_FOUND)
+            except comment.DoesNotExist as exc:
+                return Response(str(exc), status=status.HTTP_403_FORBIDDEN)
         else:
-            print("je suis dqn le else  ")
+
             return Response(None, status=status.HTTP_403_FORBIDDEN)
