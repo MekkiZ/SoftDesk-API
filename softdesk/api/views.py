@@ -234,3 +234,34 @@ class CommentsAddApiView(APIView):
         else:
 
             return Response(None, status=status.HTTP_403_FORBIDDEN)
+
+
+class CommentModifyView(APIView):
+    serializer_class = CommentAddSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, project_id, issues_id, comment_id):
+        Issues.objects.filter(project_id_id=project_id)
+        comment_to_get = Comments.objects.filter(Q(issue_id_id=issues_id) & Q(id=comment_id))
+        serializer = CommentAddSerializer(comment_to_get, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        # return Issues.objects.filter(project_id_id=project_id)
+
+    def put(self, request, issues_id, comment_id, *args, **kwargs):
+        Issues.objects.get(id=issues_id)
+        comment = Comments.objects.get(id=comment_id)
+        serializer = CommentAddSerializer(comment, data=request.data)
+        data = request.data
+        if serializer.is_valid():
+
+            comment.description = data['description']
+            comment.author_user_id = User.objects.get(id=data['author_user_id'])
+            comment.save()
+
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+
+    def delete(self, request, issues_id, project_id, comment_id, *args, **kwargs):
+        Issues.objects.filter(project_id_id=project_id)
+        f = Comments.objects.filter(Q(id=comment_id) & Q(issue_id_id=issues_id))
+        f.delete()
+        return Response(status.HTTP_200_OK)
