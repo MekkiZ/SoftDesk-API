@@ -117,22 +117,28 @@ class IssuesModifyView(APIView):
         issues = Issues.objects.get(id=issues_id)
         serializer = IssueAddForProjectSerializer(issues, data=request.data)
         data = request.data
-        if serializer.is_valid():
-            issues.title = data['title']
-            issues.desc = data['desc']
-            issues.tag = data['tag']
-            issues.priority = data['priority']
-            issues.status = data['status']
-            issues.author_user_id = User.objects.get(id=data['author_user_id'])
-            issues.assignee_user_id = User.objects.get(id=data['assignee_user_id'])
-            issues.save()
+        if request.user.id == Issues.objects.filter(author_user_id_id=request.user.id):
+            if serializer.is_valid():
+                issues.title = data['title']
+                issues.desc = data['desc']
+                issues.tag = data['tag']
+                issues.priority = data['priority']
+                issues.status = data['status']
+                issues.author_user_id = User.objects.get(id=data['author_user_id'])
+                issues.assignee_user_id = User.objects.get(id=data['assignee_user_id'])
+                issues.save()
 
-            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+                return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(status.HTTP_403_FORBIDDEN)
 
     def delete(self, request, issues_id, project_id, *args, **kwargs):
-        f = Issues.objects.filter(Q(id=issues_id) & Q(project_id_id=project_id))
-        f.delete()
-        return Response(status.HTTP_200_OK)
+        if request.user.id == Issues.objects.filter(author_user_id_id=request.user.id):
+            f = Issues.objects.filter(Q(id=issues_id) & Q(project_id_id=project_id))
+            f.delete()
+            return Response(status.HTTP_200_OK)
+        else:
+            return Response(status.HTTP_403_FORBIDDEN)
 
 
 class IssueViewSet(viewsets.ModelViewSet):
@@ -191,10 +197,13 @@ class DeleteContributeur(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['DELETE'])
     def delete(self, request, user_id_id, *args, **kwargs):
-        user = self.kwargs['user_id_id']
-        f = Contributors.objects.filter(project_id=self.kwargs['project_id'])
-        f.delete()
-        return Response(status.HTTP_204_NO_CONTENT)
+        if request.user.id == Projects.objects.filter(author_user_id_id=request.user.id):
+            user = self.kwargs['user_id_id']
+            f = Contributors.objects.filter(project_id=self.kwargs['project_id'])
+            f.delete()
+            return Response(status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status.HTTP_403_FORBIDDEN)
 
 
 class CommentsAddApiView(APIView):
@@ -248,20 +257,29 @@ class CommentModifyView(APIView):
         # return Issues.objects.filter(project_id_id=project_id)
 
     def put(self, request, issues_id, comment_id, *args, **kwargs):
+
         Issues.objects.get(id=issues_id)
         comment = Comments.objects.get(id=comment_id)
         serializer = CommentAddSerializer(comment, data=request.data)
         data = request.data
-        if serializer.is_valid():
+        if request.user.id == Comments.objects.filter(author_user_id_id=request.user.id):
+            if serializer.is_valid():
+                comment.description = data['description']
+                comment.author_user_id = User.objects.get(id=data['author_user_id'])
+                comment.save()
 
-            comment.description = data['description']
-            comment.author_user_id = User.objects.get(id=data['author_user_id'])
-            comment.save()
-
-            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+                return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(status.HTTP_403_FORBIDDEN)
 
     def delete(self, request, issues_id, project_id, comment_id, *args, **kwargs):
-        Issues.objects.filter(project_id_id=project_id)
-        f = Comments.objects.filter(Q(id=comment_id) & Q(issue_id_id=issues_id))
-        f.delete()
-        return Response(status.HTTP_200_OK)
+
+        if request.user.id == Comments.objects.filter(author_user_id_id=request.user.id):
+            print("oui c egqle au mm id")
+            Issues.objects.filter(project_id_id=project_id)
+            f = Comments.objects.filter(Q(id=comment_id) & Q(issue_id_id=issues_id))
+            f.delete()
+            return Response(status.HTTP_200_OK)
+        else:
+
+            return Response(status.HTTP_403_FORBIDDEN)
