@@ -27,19 +27,46 @@ class Contributors(models.Model):
 
     )
 
+    ROLE_CHOICES = (
+        ('DEV', 'DEV'),
+        ('Designer', 'Designer'),
+        ('Chef de project', 'Chef de project'),
+        ('Lead', 'Lead')
+
+    )
+
     user_id = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     project_id = models.ForeignKey(Projects, on_delete=models.CASCADE)
     permission = models.CharField(max_length=1, choices=PERMISSION_CHOICES)
-    role = models.CharField(max_length=255)
+    role = models.CharField(max_length=255, choices=ROLE_CHOICES)
 
 
 class Issues(models.Model):
+    PRIORITY_CHOICES = (
+        ('L', 'FAIBLE'),
+        ('M', 'MOYENNE'),
+        ('H', 'ÉLEVÉE')
+
+    )
+
+    TAG_CHOICES = (
+        ('BUG', 'BUG'),
+        ('AMÉLIORATION', 'AMÉLIORATION'),
+        ('TÂCHE', 'TÂCHE')
+
+    )
+    STATUS_CHOICES = (
+        ('DO', 'À faire'),
+        ('IN PROGRESS', 'En cours'),
+        ('FINISH', 'Terminé')
+
+    )
     title = models.CharField(max_length=255)
     desc = models.CharField(max_length=255)
-    tag = models.CharField(max_length=255)
-    priority = models.CharField(max_length=255)
+    tag = models.CharField(max_length=255, choices=TAG_CHOICES)
+    priority = models.CharField(max_length=255, choices=PRIORITY_CHOICES)
     project_id = models.ForeignKey(Projects, on_delete=models.CASCADE, related_name='project_id')
-    status = models.CharField(max_length=255)
+    status = models.CharField(max_length=255, choices=STATUS_CHOICES)
     author_user_id = models.ForeignKey(
         to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='author_user_id')
     assignee_user_id = models.ForeignKey(

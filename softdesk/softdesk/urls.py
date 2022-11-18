@@ -1,5 +1,6 @@
-"""softdesk URL Configuration
 
+
+"""softdesk URL Configuration
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.1/topics/http/urls/
 Examples:
@@ -39,7 +40,7 @@ urlpatterns = [
     path('signup/', v.RegisterUserAPIView.as_view()),
     path('projects/<int:project_id>/users/', v.ContributorViewSet.as_view({'get': 'list'})),
     path('projects/<int:project_id>/users/<int:user_id_id>/', v.DeleteContributeur.as_view({'get': 'list'})),
-    path('projects/<int:project_id>/issues/', v.IssueDetailsForProjectViewSet.as_view({'get': 'list'})),
+    path('projects/<int:project_id>/issues/', v.IssueDetailsForProjectViewSet.as_view()),
     path('projects/<int:project_id>/issues/<int:issues_id>/', v.IssuesModifyView.as_view()),
     path('projects/<int:project_id>/issues/<int:issues_id>/comments/', v.CommentsAddApiView.as_view()),
     path('projects/<int:project_id>/issues/<int:issues_id>/comments/<int:comment_id>/', v.CommentModifyView.as_view()),

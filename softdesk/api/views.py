@@ -44,19 +44,34 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectListSerializer
-    detail_class = ProjectDetailSerializer
 
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user.id
         queryset = Projects.objects.filter(author_user_id=user)
-        return queryset
+        queryset_user_con = Contributors.objects.filter(user_id_id=user)
 
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return self.detail_class
-        return super().get_serializer_class()
+        if queryset:
+            print('premuier if')
+            return queryset
+        elif queryset_user_con:
+            print('deuxieme if')
+            project_con = Contributors.objects.get(user_id_id=user)
+            print(queryset_user_con)
+            print(project_con.project_id_id)
+            return Projects.objects.filter(id=project_con.project_id_id)
+        else:
+            return Projects.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        project = Projects.objects.get(id=kwargs.get('pk'))
+        print(project)
+        if Projects.objects.filter(author_user_id_id=request.user.id):
+            project.delete()
+            return Response(status.HTTP_200_OK)
+        else:
+            return Response(status.HTTP_403_FORBIDDEN)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -65,13 +80,24 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class IssueDetailsForProjectViewSet(viewsets.ModelViewSet):
+class IssueDetailsForProjectViewSet(APIView):
     serializer_class = IssueAddForProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
+    def get(self, request, project_id, *args, **kwargs):
+        # IssueSerializer
         project_issue_id = self.kwargs['project_id']
-        return Issues.objects.filter(project_id=project_issue_id)
+        issue_project = Issues.objects.filter(project_id=project_issue_id)
+        project_get = Projects.objects.get(id=project_issue_id)
+
+        serializer = IssueSerializer(issue_project, many=True)
+        contributor = Contributors.objects.filter(Q(project_id_id=project_issue_id)
+                                                  & Q(user_id_id=request.user.id)
+                                                  )
+        if contributor.exists():
+            return Response(serializer.data, status.HTTP_200_OK)
+        else:
+            return Response(status.HTTP_404_NOT_FOUND)
 
     def post(self, request, project_id, *args, **kwargs):
 
@@ -117,7 +143,7 @@ class IssuesModifyView(APIView):
         issues = Issues.objects.get(id=issues_id)
         serializer = IssueAddForProjectSerializer(issues, data=request.data)
         data = request.data
-        if request.user.id == Issues.objects.filter(author_user_id_id=request.user.id):
+        if request.user.id == issues.author_user_id_id:
             if serializer.is_valid():
                 issues.title = data['title']
                 issues.desc = data['desc']
@@ -133,7 +159,8 @@ class IssuesModifyView(APIView):
             return Response(status.HTTP_403_FORBIDDEN)
 
     def delete(self, request, issues_id, project_id, *args, **kwargs):
-        if request.user.id == Issues.objects.filter(author_user_id_id=request.user.id):
+        issues = Issues.objects.get(id=issues_id)
+        if request.user.id == issues.author_user_id_id:
             f = Issues.objects.filter(Q(id=issues_id) & Q(project_id_id=project_id))
             f.delete()
             return Response(status.HTTP_200_OK)
@@ -174,7 +201,10 @@ class ContributorViewSet(viewsets.ModelViewSet):
                 contributor.permission = request.data['permission']
                 data = {'user_id': contributor.user_id.id, 'project_id': contributor.project_id.id,
                         'permission': contributor.permission, 'role': contributor.role}
-                f = Contributors.objects.filter(project_id=contributor.project_id)
+                f = Contributors.objects.filter(Q(permission=contributor.permission) &
+                                                Q(role=contributor.role) &
+                                                Q(project_id_id=contributor.project_id) &
+                                                Q(user_id_id=contributor.user_id_id))
                 if f.count() >= 1:
                     f.delete()
                 contributor.save()
@@ -196,10 +226,11 @@ class DeleteContributeur(viewsets.ModelViewSet):
                                            )
 
     @action(detail=False, methods=['DELETE'])
-    def delete(self, request, user_id_id, *args, **kwargs):
-        if request.user.id == Projects.objects.filter(author_user_id_id=request.user.id):
+    def delete(self, request, project_id, user_id_id, *args, **kwargs):
+        project = get_object_or_404(Projects, id=project_id)
+        if request.user.id == project.author_user_id_id:
             user = self.kwargs['user_id_id']
-            f = Contributors.objects.filter(project_id=self.kwargs['project_id'])
+            f = Contributors.objects.filter(user_id_id=user_id_id)
             f.delete()
             return Response(status.HTTP_204_NO_CONTENT)
         else:
@@ -214,23 +245,30 @@ class CommentsAddApiView(APIView):
         return Comments.objects.filter(issue_id_id=self.kwargs['issues_id'])
 
     def get(self, request, project_id, issues_id):
-        Comments.objects.filter(issue_id_id=issues_id)
-        Issues.objects.filter(project_id_id=project_id)
-        comments = Comments.objects.filter(issue_id_id=issues_id)
-        serializer = CommentSerializer(comments, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        user_contributor = Contributors.objects.filter(Q(user_id_id=request.user.id)
+                                                       & Q(project_id_id=project_id))
+
+        if user_contributor:
+            Issues.objects.filter(project_id_id=project_id)
+            comments = Comments.objects.filter(issue_id_id=issues_id)
+            serializer = CommentSerializer(comments, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            data = {'you are not contributor of this project contact your CTO'}
+            return Response(data, status.HTTP_403_FORBIDDEN)
 
     def post(self, request, project_id, issues_id):
 
         issues = get_object_or_404(Issues, id=issues_id)
         Issues.objects.filter(project_id_id=project_id)
-        if request.user.id == request.user.id:
+
+        if request.user.id == issues.author_user_id_id:
+
             try:
                 comment = Comments()
                 comment.issue_id_id = issues.id
                 comment.description = request.data['description']
                 comment.author_user_id = User.objects.get(id=request.data['author_user_id'])
-                print(comment.author_user_id_id)
                 comment.save()
                 data = {
                     'issue_id': comment.issue_id_id,
@@ -250,19 +288,21 @@ class CommentModifyView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, project_id, issues_id, comment_id):
+
         Issues.objects.filter(project_id_id=project_id)
         comment_to_get = Comments.objects.filter(Q(issue_id_id=issues_id) & Q(id=comment_id))
         serializer = CommentAddSerializer(comment_to_get, many=True)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
         # return Issues.objects.filter(project_id_id=project_id)
 
     def put(self, request, issues_id, comment_id, *args, **kwargs):
 
-        Issues.objects.get(id=issues_id)
+        issues = Issues.objects.get(id=issues_id)
         comment = Comments.objects.get(id=comment_id)
         serializer = CommentAddSerializer(comment, data=request.data)
         data = request.data
-        if request.user.id == Comments.objects.filter(author_user_id_id=request.user.id):
+        if request.user.id == issues.assignee_user_id_id or issues.author_user_id:
             if serializer.is_valid():
                 comment.description = data['description']
                 comment.author_user_id = User.objects.get(id=data['author_user_id'])
@@ -273,9 +313,8 @@ class CommentModifyView(APIView):
             return Response(status.HTTP_403_FORBIDDEN)
 
     def delete(self, request, issues_id, project_id, comment_id, *args, **kwargs):
-
-        if request.user.id == Comments.objects.filter(author_user_id_id=request.user.id):
-            print("oui c egqle au mm id")
+        issues = Issues.objects.get(id=issues_id)
+        if request.user.id == issues.author_user_id_id:
             Issues.objects.filter(project_id_id=project_id)
             f = Comments.objects.filter(Q(id=comment_id) & Q(issue_id_id=issues_id))
             f.delete()
