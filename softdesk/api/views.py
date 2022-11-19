@@ -18,6 +18,9 @@ from rest_framework import status
 
 # Class based view to Get User Details using Token Authentication
 class UserDetailAPI(APIView):
+    """
+    Function get details to all users in API
+    """
     authentication_classes = (TokenAuthentication,)
     permission_classes = (AllowAny,)
 
@@ -29,6 +32,9 @@ class UserDetailAPI(APIView):
 
 # Class based view to register user
 class RegisterUserAPIView(generics.CreateAPIView):
+    """
+    This function have to purpose to display the register part
+    """
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
 
@@ -43,11 +49,18 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
+    """
+    The first EndPoint of this project, with purpose to show projects of its contributors
+    """
     serializer_class = ProjectListSerializer
 
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        """
+        get project of contributor
+        :return: return querySet
+        """
         user = self.request.user.id
         queryset = Projects.objects.filter(author_user_id=user)
         queryset_user_con = Contributors.objects.filter(user_id_id=user)
@@ -65,6 +78,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return Projects.objects.all()
 
     def destroy(self, request, *args, **kwargs):
+        """
+        Function to delete Project, only the author can
+        :param request: get request for statement and handle the query
+        :param args: take url param
+        :param kwargs: take url param
+        :return: queryset and response 200
+        """
         project = Projects.objects.get(id=kwargs.get('pk'))
         print(project)
         if Projects.objects.filter(author_user_id_id=request.user.id):
@@ -75,16 +95,28 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
+    """
+    Class ViewSet for Comment to issue
+    """
     queryset = Comments.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 
 class IssueDetailsForProjectViewSet(APIView):
+    """
+    class viewSet issue detaisl for Project
+    """
     serializer_class = IssueAddForProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, project_id, *args, **kwargs):
+        """
+        Function to get all issues for project
+        :param request: handle and use for statement
+        :param project_id: ID project for query
+        :return: querySet
+        """
         # IssueSerializer
         project_issue_id = self.kwargs['project_id']
         issue_project = Issues.objects.filter(project_id=project_issue_id)
@@ -100,6 +132,14 @@ class IssueDetailsForProjectViewSet(APIView):
             return Response(status.HTTP_404_NOT_FOUND)
 
     def post(self, request, project_id, *args, **kwargs):
+        """
+        Function to createIssue
+        :param request: id user
+        :param project_id: Porject id
+        :param args:
+        :param kwargs:
+        :return: queryset
+        """
 
         project = get_object_or_404(Projects, id=project_id)
         if request.user.id == project.author_user_id_id:
