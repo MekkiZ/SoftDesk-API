@@ -31,7 +31,10 @@ Quit the server with CONTROL-C.
 Copy this link on your favorite browser :
 http://127.0.0.1:8080/
 
-For all endpoint, you can go in PostmanPublished :
+## Use Endpoint with Postman and curl:
+
+All endpoint, you can go in PostmanPublished :
+
 https://documenter.getpostman.com/view/24506585/2s8YmRQ26M
 
 you have end Point and little description for how to start
